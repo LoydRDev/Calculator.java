@@ -10,6 +10,148 @@ package calculator;
  * @author 97699-24265456
  */
 public class MainFrame extends javax.swing.JFrame {
+    
+    // Variables for calculator operations
+    private double firstNumber;
+    private double secondNumber;
+    private double result;
+    private String operation;
+    private boolean isOperationClicked = false;
+    
+    // Helper methods for calculator functionality
+     private void handleNumberButton(String digit) {
+         if (isOperationClicked) {
+             // If an operation was just clicked, start a new number
+             if (!operation.isEmpty()) {
+                 // Keep the equation display but start a new number
+                 String currentText = jLabel1.getText();
+                 if (currentText.endsWith(" ")) {
+                     // Just add the digit
+                     jLabel1.setText(currentText + digit);
+                 } else {
+                     // Replace the current text with just the operation part
+                     jLabel1.setText(firstNumber + " " + operation + " " + digit);
+                 }
+             } else {
+                 // No operation yet, just start a new number
+                 jLabel1.setText(digit);
+             }
+             isOperationClicked = false;
+         } else {
+             // Continue adding digits to the current number
+             jLabel1.setText(jLabel1.getText() + digit);
+         }
+         // Clear the answer label when typing new numbers
+         jLabel2.setText("");
+     }
+     
+     private void handleOperatorButton(String op) {
+         if (!jLabel1.getText().isEmpty()) {
+             try {
+                 // Extract the last number from the display text
+                 String displayText = jLabel1.getText();
+                 
+                 // If we just calculated a result, use that as the first number
+                 if (displayText.contains("=")) {
+                     firstNumber = Double.parseDouble(jLabel2.getText());
+                     jLabel1.setText(jLabel2.getText());
+                 } 
+                 // If there's already an operation in progress, extract only the last number
+                 else if (displayText.contains(" ")) {
+                     String[] parts = displayText.split(" ");
+                     // Get the last part which should be the current number
+                     String lastPart = parts[parts.length - 1];
+                     if (!lastPart.isEmpty()) {
+                         firstNumber = Double.parseDouble(lastPart);
+                     }
+                 } else {
+                     firstNumber = Double.parseDouble(displayText);
+                 }
+                 
+                 operation = op;
+                 jLabel1.setText(firstNumber + " " + op + " ");
+                 isOperationClicked = true;
+             } catch (NumberFormatException e) {
+                 jLabel1.setText("Error");
+                 jLabel2.setText("");
+             }
+         }
+     }
+     
+     private void calculateResult() {
+         if (!jLabel1.getText().isEmpty() && !isOperationClicked) {
+             try {
+                 // Parse the expression to extract the second number
+                 String displayText = jLabel1.getText();
+                 String[] parts = displayText.split(" ");
+                 
+                 // The last part should be the second number
+                 if (parts.length >= 3) {
+                     secondNumber = Double.parseDouble(parts[parts.length - 1]);
+                     
+                     switch (operation) {
+                         case "+":
+                             result = firstNumber + secondNumber;
+                             break;
+                         case "-":
+                             result = firstNumber - secondNumber;
+                             break;
+                         case "*":
+                             result = firstNumber * secondNumber;
+                             break;
+                         case "/":
+                             if (secondNumber != 0) {
+                                 result = firstNumber / secondNumber;
+                             } else {
+                                 jLabel1.setText("Error: Division by zero");
+                                 jLabel2.setText("Error");
+                                 return;
+                             }
+                             break;
+                     }
+                     
+                     // Store the equation for display
+                     String equation = firstNumber + " " + operation + " " + secondNumber + " = ";
+                     jLabel1.setText(equation);
+                 } else {
+                     // If there's no operation or second number, just use the displayed number
+                     result = Double.parseDouble(displayText);
+                     jLabel1.setText(displayText + " = ");
+                 }
+                  
+                 // Format result to remove decimal point for whole numbers
+                 if (result == (int) result) {
+                     jLabel2.setText(String.valueOf((int) result));
+                 } else {
+                     jLabel2.setText(String.valueOf(result));
+                 }
+                  
+                 isOperationClicked = true;
+             } catch (NumberFormatException e) {
+                 jLabel1.setText("Error: Invalid input");
+                 jLabel2.setText("Error");
+                 return;
+             }
+         }
+     }
+     
+     private void clearCalculator() {
+         jLabel1.setText("");
+         jLabel2.setText("");
+         firstNumber = 0;
+         secondNumber = 0;
+         result = 0;
+         operation = "";
+     }
+     
+     private void eraseLastDigit() {
+         String currentText = jLabel1.getText();
+         if (!currentText.isEmpty()) {
+             jLabel1.setText(currentText.substring(0, currentText.length() - 1));
+             // Clear the answer label when modifying input
+             jLabel2.setText("");
+         }
+     }
 
     /**
      * Creates new form MainFrame
@@ -73,11 +215,12 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel1.setBackground(new java.awt.Color(0, 0, 0));
 
         jPanel2.setBackground(new java.awt.Color(0, 102, 0));
-        jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(null));
+        jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -86,21 +229,18 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(14, 14, 14))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())))
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(13, Short.MAX_VALUE)
-                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(16, 16, 16)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(20, Short.MAX_VALUE))
         );
 
         jLabel1.getAccessibleContext().setAccessibleName("AnswerPanel");
@@ -108,6 +248,7 @@ public class MainFrame extends javax.swing.JFrame {
         sevenButton.setBackground(new java.awt.Color(204, 204, 204));
         sevenButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         sevenButton.setText("7");
+        sevenButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         sevenButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 sevenButtonActionPerformed(evt);
@@ -117,6 +258,7 @@ public class MainFrame extends javax.swing.JFrame {
         eightButton.setBackground(new java.awt.Color(204, 204, 204));
         eightButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         eightButton.setText("8");
+        eightButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         eightButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 eightButtonActionPerformed(evt);
@@ -126,6 +268,7 @@ public class MainFrame extends javax.swing.JFrame {
         nineButton.setBackground(new java.awt.Color(204, 204, 204));
         nineButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         nineButton.setText("9");
+        nineButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         nineButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 nineButtonActionPerformed(evt);
@@ -135,6 +278,7 @@ public class MainFrame extends javax.swing.JFrame {
         divideButton.setBackground(new java.awt.Color(204, 204, 204));
         divideButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         divideButton.setText("/");
+        divideButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         divideButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 divideButtonActionPerformed(evt);
@@ -144,6 +288,7 @@ public class MainFrame extends javax.swing.JFrame {
         multiplyButton.setBackground(new java.awt.Color(204, 204, 204));
         multiplyButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         multiplyButton.setText("x");
+        multiplyButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         multiplyButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 multiplyButtonActionPerformed(evt);
@@ -153,6 +298,7 @@ public class MainFrame extends javax.swing.JFrame {
         subtractButton.setBackground(new java.awt.Color(204, 204, 204));
         subtractButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         subtractButton.setText("-");
+        subtractButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         subtractButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 subtractButtonActionPerformed(evt);
@@ -162,6 +308,7 @@ public class MainFrame extends javax.swing.JFrame {
         addButton.setBackground(new java.awt.Color(204, 204, 204));
         addButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         addButton.setText("+");
+        addButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addButtonActionPerformed(evt);
@@ -171,6 +318,7 @@ public class MainFrame extends javax.swing.JFrame {
         fourButton.setBackground(new java.awt.Color(204, 204, 204));
         fourButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         fourButton.setText("4");
+        fourButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         fourButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fourButtonActionPerformed(evt);
@@ -180,6 +328,7 @@ public class MainFrame extends javax.swing.JFrame {
         fiveButton.setBackground(new java.awt.Color(204, 204, 204));
         fiveButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         fiveButton.setText("5");
+        fiveButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         fiveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fiveButtonActionPerformed(evt);
@@ -189,6 +338,7 @@ public class MainFrame extends javax.swing.JFrame {
         sixButton.setBackground(new java.awt.Color(204, 204, 204));
         sixButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         sixButton.setText("6");
+        sixButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         sixButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 sixButtonActionPerformed(evt);
@@ -198,6 +348,7 @@ public class MainFrame extends javax.swing.JFrame {
         oneButton.setBackground(new java.awt.Color(204, 204, 204));
         oneButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         oneButton.setText("1");
+        oneButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         oneButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 oneButtonActionPerformed(evt);
@@ -207,6 +358,7 @@ public class MainFrame extends javax.swing.JFrame {
         twoButton.setBackground(new java.awt.Color(204, 204, 204));
         twoButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         twoButton.setText("2");
+        twoButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         twoButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 twoButtonActionPerformed(evt);
@@ -216,6 +368,7 @@ public class MainFrame extends javax.swing.JFrame {
         threeButton.setBackground(new java.awt.Color(204, 204, 204));
         threeButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         threeButton.setText("3");
+        threeButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         threeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 threeButtonActionPerformed(evt);
@@ -225,6 +378,7 @@ public class MainFrame extends javax.swing.JFrame {
         zeroButton.setBackground(new java.awt.Color(204, 204, 204));
         zeroButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         zeroButton.setText("0");
+        zeroButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         zeroButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 zeroButtonActionPerformed(evt);
@@ -234,6 +388,7 @@ public class MainFrame extends javax.swing.JFrame {
         pointButton.setBackground(new java.awt.Color(204, 204, 204));
         pointButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         pointButton.setText(".");
+        pointButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         pointButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pointButtonActionPerformed(evt);
@@ -243,6 +398,7 @@ public class MainFrame extends javax.swing.JFrame {
         equalButton.setBackground(new java.awt.Color(204, 204, 204));
         equalButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         equalButton.setText("=");
+        equalButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         equalButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 equalButtonActionPerformed(evt);
@@ -252,6 +408,7 @@ public class MainFrame extends javax.swing.JFrame {
         clearButton.setBackground(new java.awt.Color(204, 204, 204));
         clearButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         clearButton.setText("A/C");
+        clearButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         clearButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 clearButtonActionPerformed(evt);
@@ -261,6 +418,7 @@ public class MainFrame extends javax.swing.JFrame {
         eraseButton.setBackground(new java.awt.Color(204, 204, 204));
         eraseButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         eraseButton.setText("←");
+        eraseButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         eraseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 eraseButtonActionPerformed(evt);
@@ -348,7 +506,7 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(zeroButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pointButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(equalButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(22, Short.MAX_VALUE))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
 
         divideButton.getAccessibleContext().setAccessibleName("DivideOperation");
@@ -366,82 +524,84 @@ public class MainFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void sixButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sixButtonActionPerformed
-    
+        handleNumberButton("6");
     }//GEN-LAST:event_sixButtonActionPerformed
 
     private void threeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_threeButtonActionPerformed
-        
+        handleNumberButton("3");
     }//GEN-LAST:event_threeButtonActionPerformed
 
     private void zeroButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zeroButtonActionPerformed
-        
+        handleNumberButton("0");
     }//GEN-LAST:event_zeroButtonActionPerformed
 
     private void pointButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointButtonActionPerformed
-        // TODO add your handling code here:
+        handleNumberButton(".");
     }//GEN-LAST:event_pointButtonActionPerformed
 
     private void oneButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oneButtonActionPerformed
-        // TODO add your handling code here:
+        handleNumberButton("1");
     }//GEN-LAST:event_oneButtonActionPerformed
 
     private void twoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_twoButtonActionPerformed
-        // TODO add your handling code here:
+        handleNumberButton("2");
     }//GEN-LAST:event_twoButtonActionPerformed
 
     private void fourButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fourButtonActionPerformed
-        // TODO add your handling code here:
+        handleNumberButton("4");
     }//GEN-LAST:event_fourButtonActionPerformed
 
     private void fiveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fiveButtonActionPerformed
-        // TODO add your handling code here:
+        handleNumberButton("5");
     }//GEN-LAST:event_fiveButtonActionPerformed
 
     private void sevenButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sevenButtonActionPerformed
-        // TODO add your handling code here:
+        handleNumberButton("7");
     }//GEN-LAST:event_sevenButtonActionPerformed
 
     private void eightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_eightButtonActionPerformed
-        // TODO add your handling code here:
+        handleNumberButton("8");
     }//GEN-LAST:event_eightButtonActionPerformed
 
     private void nineButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nineButtonActionPerformed
-        // TODO add your handling code here:
+        handleNumberButton("9");
     }//GEN-LAST:event_nineButtonActionPerformed
 
     private void divideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_divideButtonActionPerformed
-        // TODO add your handling code here:
+        handleOperatorButton("/");
     }//GEN-LAST:event_divideButtonActionPerformed
 
     private void multiplyButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_multiplyButtonActionPerformed
-        // TODO add your handling code here:
+        handleOperatorButton("*");
     }//GEN-LAST:event_multiplyButtonActionPerformed
 
     private void subtractButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_subtractButtonActionPerformed
-        // TODO add your handling code here:
+        handleOperatorButton("-");
     }//GEN-LAST:event_subtractButtonActionPerformed
 
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
-        // TODO add your handling code here:
+        handleOperatorButton("+");
     }//GEN-LAST:event_addButtonActionPerformed
 
     private void equalButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_equalButtonActionPerformed
-        // TODO add your handling code here:
+        calculateResult();
     }//GEN-LAST:event_equalButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
-        // TODO add your handling code here:
+        clearCalculator();
     }//GEN-LAST:event_clearButtonActionPerformed
 
     private void eraseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_eraseButtonActionPerformed
-        // TODO add your handling code here:
+        eraseLastDigit();
     }//GEN-LAST:event_eraseButtonActionPerformed
 
     /**
